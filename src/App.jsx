@@ -1,6 +1,17 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, ReferenceLine } from 'recharts';
 import { TrendingUp, TrendingDown, AlertTriangle, Bell, Upload, MessageSquare, LayoutDashboard, Wallet, Send, Sparkles, ArrowUpRight, ArrowDownRight, Calendar, ChevronLeft } from 'lucide-react';
+
+// hook لكشف حجم الشاشة
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 820 : false);
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 820);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  return isMobile;
+}
 
 // ============ بيانات تجريبية واقعية لشركة سعودية متوسطة ============
 const accounts = [
@@ -83,80 +94,116 @@ export default function TreasuryPrototype() {
     setTimeout(() => setUploadState('done'), 2200);
   };
 
+  const isMobile = useIsMobile();
+
+  const navItems = [
+    { id: 'dashboard', label: 'لوحة التحكم', icon: LayoutDashboard },
+    { id: 'forecast', label: 'التوقعات', icon: TrendingUp },
+    { id: 'alerts', label: 'التنبيهات', icon: Bell, badge: 3 },
+    { id: 'chat', label: 'المساعد', icon: Sparkles },
+    { id: 'upload', label: 'رفع كشف', icon: Upload },
+  ];
+
   return (
-    <div dir="rtl" style={styles.root}>
+    <div dir="rtl" style={{ ...styles.root, flexDirection: isMobile ? 'column' : 'row' }}>
       <style>{css}</style>
 
-      {/* Sidebar */}
-      <aside style={styles.sidebar}>
-        <div style={styles.logo}>
-          <div style={styles.logoMark}>ر</div>
-          <div>
-            <div style={styles.logoName}>رصيد</div>
-            <div style={styles.logoTag}>ذكاء الخزينة</div>
+      {isMobile ? (
+        <header style={styles.mobileBar}>
+          <div style={styles.mobileLogo}>
+            <div style={styles.logoMark}>ر</div>
+            <div>
+              <div style={styles.logoName}>رصيد</div>
+              <div style={styles.logoTag}>ذكاء الخزينة</div>
+            </div>
           </div>
-        </div>
+          <div style={styles.companyAvatar}>ن</div>
+        </header>
+      ) : (
+        <aside style={styles.sidebar}>
+          <div style={styles.logo}>
+            <div style={styles.logoMark}>ر</div>
+            <div>
+              <div style={styles.logoName}>رصيد</div>
+              <div style={styles.logoTag}>ذكاء الخزينة</div>
+            </div>
+          </div>
 
-        <nav style={styles.nav}>
-          {[
-            { id: 'dashboard', label: 'لوحة التحكم', icon: LayoutDashboard },
-            { id: 'forecast', label: 'التوقعات', icon: TrendingUp },
-            { id: 'alerts', label: 'التنبيهات', icon: Bell, badge: 3 },
-            { id: 'chat', label: 'المساعد المالي', icon: Sparkles },
-            { id: 'upload', label: 'رفع كشف حساب', icon: Upload },
-          ].map((item) => {
+          <nav style={styles.nav}>
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const active = view === item.id;
+              return (
+                <button key={item.id} onClick={() => setView(item.id)}
+                  style={{ ...styles.navItem, ...(active ? styles.navItemActive : {}) }}>
+                  <Icon size={19} strokeWidth={2} />
+                  <span style={{ flex: 1, textAlign: 'right' }}>{item.label}</span>
+                  {item.badge && <span style={styles.navBadge}>{item.badge}</span>}
+                </button>
+              );
+            })}
+          </nav>
+
+          <div style={styles.sidebarFoot}>
+            <div style={styles.companyCard}>
+              <div style={styles.companyAvatar}>ن</div>
+              <div>
+                <div style={styles.companyName}>شركة نخبة التجارة</div>
+                <div style={styles.companyMeta}>متصل بـ 3 حسابات</div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      )}
+
+      <main style={{ ...styles.main, ...(isMobile ? styles.mainMobile : {}) }}>
+        {view === 'dashboard' && <Dashboard setView={setView} isMobile={isMobile} />}
+        {view === 'forecast' && <Forecast isMobile={isMobile} />}
+        {view === 'alerts' && <Alerts />}
+        {view === 'chat' && (
+          <Chat messages={chatMessages} input={chatInput} setInput={setChatInput} onSend={sendMessage} isMobile={isMobile} />
+        )}
+        {view === 'upload' && <UploadView state={uploadState} run={runUpload} reset={() => setUploadState('idle')} />}
+      </main>
+
+      {isMobile && (
+        <nav style={styles.bottomNav}>
+          {navItems.map((item) => {
             const Icon = item.icon;
             const active = view === item.id;
             return (
               <button key={item.id} onClick={() => setView(item.id)}
-                style={{ ...styles.navItem, ...(active ? styles.navItemActive : {}) }}>
-                <Icon size={19} strokeWidth={2} />
-                <span style={{ flex: 1, textAlign: 'right' }}>{item.label}</span>
-                {item.badge && <span style={styles.navBadge}>{item.badge}</span>}
+                style={{ ...styles.bottomNavItem, color: active ? '#0EA47A' : '#94A3B8' }}>
+                <div style={{ position: 'relative' }}>
+                  <Icon size={22} strokeWidth={2} />
+                  {item.badge && <span style={styles.bottomBadge}>{item.badge}</span>}
+                </div>
+                <span style={styles.bottomNavLabel}>{item.label}</span>
               </button>
             );
           })}
         </nav>
-
-        <div style={styles.sidebarFoot}>
-          <div style={styles.companyCard}>
-            <div style={styles.companyAvatar}>ن</div>
-            <div>
-              <div style={styles.companyName}>شركة نخبة التجارة</div>
-              <div style={styles.companyMeta}>متصل بـ 3 حسابات</div>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* Main */}
-      <main style={styles.main}>
-        {view === 'dashboard' && <Dashboard setView={setView} />}
-        {view === 'forecast' && <Forecast />}
-        {view === 'alerts' && <Alerts />}
-        {view === 'chat' && (
-          <Chat messages={chatMessages} input={chatInput} setInput={setChatInput} onSend={sendMessage} />
-        )}
-        {view === 'upload' && <UploadView state={uploadState} run={runUpload} reset={() => setUploadState('idle')} />}
-      </main>
+      )}
     </div>
   );
 }
 
 // ============ Dashboard ============
-function Dashboard({ setView }) {
+function Dashboard({ setView, isMobile }) {
+  const statGrid = { ...styles.statRow, gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)' };
+  const grid2 = { ...styles.grid2, gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr' };
   return (
     <div className="fade-in">
       <Header title="لوحة التحكم" subtitle="نظرة شاملة على وضعك المالي اليوم" />
 
-      <div style={styles.statRow}>
+      <div style={statGrid}>
         <StatCard label="الرصيد المجمّع" value={`${fmt(totalBalance)}`} unit="ريال" delta="+8.2%" up icon={Wallet} primary />
         <StatCard label="التدفق الداخل (الشهر)" value={`${fmt(892000)}`} unit="ريال" delta="+12%" up icon={ArrowUpRight} />
         <StatCard label="التدفق الخارج (الشهر)" value={`${fmt(1284000)}`} unit="ريال" delta="+3%" up={false} icon={ArrowDownRight} />
         <StatCard label="صافي التدفق" value={`${fmt(392000)}-`} unit="ريال" delta="تحذير" up={false} icon={TrendingDown} warn />
       </div>
 
-      <div style={styles.grid2}>
+      <div style={grid2}>
         {/* Forecast preview */}
         <div style={styles.card}>
           <div style={styles.cardHead}>
@@ -197,7 +244,7 @@ function Dashboard({ setView }) {
         </div>
       </div>
 
-      <div style={styles.grid2}>
+      <div style={grid2}>
         {/* Categories */}
         <div style={styles.card}>
           <div style={styles.cardHead}>
@@ -254,7 +301,8 @@ function Dashboard({ setView }) {
 }
 
 // ============ Forecast View ============
-function Forecast() {
+function Forecast({ isMobile }) {
+  const statGrid = { ...styles.statRow, gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)' };
   return (
     <div className="fade-in">
       <Header title="توقع التدفق النقدي" subtitle="نموذج تنبؤي يدمج أنماطك التاريخية والتقويم السعودي" />
@@ -267,7 +315,7 @@ function Forecast() {
         </div>
         <ForecastChart />
       </div>
-      <div style={styles.statRow}>
+      <div style={statGrid}>
         <StatCard label="أدنى رصيد متوقع" value={`${fmt(680000)}`} unit="ريال · أسبوع 4" warn icon={TrendingDown} up={false} />
         <StatCard label="رصيد نهاية الفترة" value={`${fmt(2420000)}`} unit="ريال · أسبوع 8" up icon={TrendingUp} delta="تعافٍ" />
         <StatCard label="دقة النموذج" value="91" unit="٪ تاريخياً" icon={Sparkles} />
@@ -362,10 +410,11 @@ function Alerts() {
 }
 
 // ============ Chat View ============
-function Chat({ messages, input, setInput, onSend }) {
+function Chat({ messages, input, setInput, onSend, isMobile }) {
   const suggestions = ['كم صرفت على الرواتب؟', 'هل لدي عجز سيولة متوقع؟', 'أي عميل متأخر في الدفع؟', 'كيف أستثمر السيولة الفائضة؟'];
+  const wrap = { ...styles.chatWrap, height: isMobile ? 'calc(100vh - 200px)' : 'calc(100vh - 64px)' };
   return (
-    <div className="fade-in" style={styles.chatWrap}>
+    <div className="fade-in" style={wrap}>
       <Header title="المساعد المالي" subtitle="اسأل بالعربية الطبيعية — الإجابات مبنية على بياناتك الفعلية" />
       <div style={styles.chatBox}>
         <div style={styles.chatMessages}>
@@ -479,6 +528,9 @@ const css = `
   input { font-family: 'Tajawal', sans-serif; }
   ::-webkit-scrollbar { width: 8px; }
   ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
+  @media (max-width: 820px) {
+    .page-title-resp { font-size: 21px !important; }
+  }
 `;
 
 const styles = {
@@ -499,6 +551,13 @@ const styles = {
   companyMeta: { fontSize: 11.5, color: '#64748B' },
 
   main: { flex: 1, padding: '32px 40px', overflowY: 'auto', maxHeight: '100vh' },
+  mainMobile: { padding: '20px 16px 90px', maxHeight: 'none' },
+  mobileBar: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', background: '#0B1220', flexShrink: 0 },
+  mobileLogo: { display: 'flex', alignItems: 'center', gap: 11 },
+  bottomNav: { position: 'fixed', bottom: 0, right: 0, left: 0, background: '#fff', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '8px 4px 10px', zIndex: 100, boxShadow: '0 -2px 12px rgba(0,0,0,0.04)' },
+  bottomNavItem: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, border: 'none', background: 'transparent', padding: '4px 8px', flex: 1 },
+  bottomNavLabel: { fontSize: 10.5, fontWeight: 600 },
+  bottomBadge: { position: 'absolute', top: -5, left: -8, background: '#EF4444', color: '#fff', fontSize: 9, fontWeight: 700, minWidth: 15, height: 15, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' },
   pageHead: { marginBottom: 28 },
   pageTitle: { fontSize: 27, fontWeight: 800, color: '#0F172A', marginBottom: 4 },
   pageSub: { fontSize: 14.5, color: '#64748B', fontWeight: 500 },
