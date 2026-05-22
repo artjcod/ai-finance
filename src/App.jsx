@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import UploadViewConnected from './UploadView.jsx';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, ReferenceLine } from 'recharts';
 import { TrendingUp, TrendingDown, AlertTriangle, Bell, Upload, MessageSquare, LayoutDashboard, Wallet, Send, Sparkles, ArrowUpRight, ArrowDownRight, Calendar, ChevronLeft } from 'lucide-react';
 
@@ -163,7 +164,7 @@ export default function TreasuryPrototype() {
         {view === 'chat' && (
           <Chat messages={chatMessages} input={chatInput} setInput={setChatInput} onSend={sendMessage} isMobile={isMobile} />
         )}
-        {view === 'upload' && <UploadView state={uploadState} run={runUpload} reset={() => setUploadState('idle')} />}
+        {view === 'upload' && <UploadViewConnected />}
       </main>
 
       {isMobile && (
@@ -444,7 +445,7 @@ function Chat({ messages, input, setInput, onSend, isMobile }) {
 }
 
 // ============ Upload View ============
-function UploadView({ state, run, reset }) {
+function UploadViewLegacyMock({ state, run, reset }) {
   return (
     <div className="fade-in">
       <Header title="رفع كشف حساب" subtitle="ادعم أي بنك سعودي — يفهم النظام البنية تلقائياً" />
