@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, createContext, useContext } from 'react';
 import UploadViewConnected from './UploadView.jsx';
 import { Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
-import { TrendingUp, TrendingDown, AlertTriangle, Bell, Upload, LayoutDashboard, Wallet, Send, Sparkles, ArrowUpRight, ArrowDownRight, Inbox, Trash2, Tag, Loader2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, AlertTriangle, Bell, Upload, LayoutDashboard, Wallet, Send, Sparkles, ArrowUpRight, ArrowDownRight, Inbox, Trash2, Tag, RefreshCw, Loader2 } from 'lucide-react';
 import { api, CATEGORIES } from './api.js';
 
 const fmt = (n) => new Intl.NumberFormat('en-US').format(Math.abs(Math.round(n || 0)));
@@ -629,6 +629,14 @@ function Transactions({ setView }) {
     setBusyId(null);
   };
 
+  const doReclassify = async (id) => {
+    setBusyId(id);
+    try {
+      await api.reclassify(id); // sans catégorie = auto
+      await refresh();
+    } catch (e) { alert('خطأ في إعادة التصنيف: ' + e.message); }
+    setBusyId(null);
+  };
 
   return (
     <div className="fade-in">
@@ -700,9 +708,14 @@ function Transactions({ setView }) {
                     {busyId === t.id ? (
                       <Loader2 size={16} className="spinner" style={{ color: '#94A3B8' }} />
                     ) : (
-                      <button onClick={() => doDelete(t.id)} style={{ ...styles.actionBtn, color: '#EF4444' }} title="حذف">
-                        <Trash2 size={15} />
-                      </button>
+                      <>
+                        <button onClick={() => doReclassify(t.id)} style={styles.actionBtn} title="إعادة التصنيف تلقائياً">
+                          <RefreshCw size={15} />
+                        </button>
+                        <button onClick={() => doDelete(t.id)} style={{ ...styles.actionBtn, color: '#EF4444' }} title="حذف">
+                          <Trash2 size={15} />
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
