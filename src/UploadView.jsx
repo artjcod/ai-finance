@@ -10,9 +10,9 @@ import { Upload, CheckCircle2, AlertCircle, FileText, Loader2 } from 'lucide-rea
 // En prod : l'URL de ton backend déployé (Railway, Render, etc.)
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
 
-const fmt = (n) => new Intl.NumberFormat('ar-SA').format(Math.abs(Math.round(n)));
+const fmt = (n) => new Intl.NumberFormat('en-US').format(Math.abs(Math.round(n)));
 
-export default function UploadView() {
+export default function UploadView({ onSuccess }) {
   const [state, setState] = useState('idle'); // idle | uploading | done | error
   const [result, setResult] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
@@ -38,6 +38,7 @@ export default function UploadView() {
       }
       setResult(data);
       setState('done');
+      if (onSuccess) onSuccess(data);
     } catch (err) {
       setErrorMsg(err.message || 'Erreur de connexion au serveur');
       setState('error');
